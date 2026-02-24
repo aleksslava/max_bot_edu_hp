@@ -1,7 +1,7 @@
 alembic==1.14.1
 asyncpg==0.29.0
 environs==14.5.0
-maxapi==0.4.2
+maxapi==0.9.15
 openpyxl==3.1.5
 PyJWT==2.11.0
 python-dotenv==1.2.1
