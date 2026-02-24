@@ -41,7 +41,9 @@ def build_admin_keyboard() -> list:
     builder = InlineKeyboardBuilder()
     builder.row(CallbackButton(text="Результаты пользователей", payload="admin:stats"))
     builder.row(CallbackButton(text="Экспорт XLSX", payload="admin:export"))
-    builder.row(CallbackButton(text="Как выдать/удалить админа", payload="admin:help"))
+    builder.row(CallbackButton(text="\u041d\u0430\u0437\u043d\u0430\u0447\u0438\u0442\u044c \u0430\u0434\u043c\u0438\u043d\u0430", payload="admin:add"))
+    builder.row(CallbackButton(text="\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f", payload="admin:del"))
+    builder.row(CallbackButton(text="\u0421\u043f\u0440\u0430\u0432\u043a\u0430", payload="admin:help"))
     builder.row(CallbackButton(text="В главное меню", payload="menu:open"))
     return [builder.as_markup()]
 

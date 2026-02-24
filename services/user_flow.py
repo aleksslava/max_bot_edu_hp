@@ -129,10 +129,9 @@ async def render_menu(message: Message) -> None:
 async def open_admin_menu(message: Message) -> None:
     chat_id = get_chat_id(message)
     text = (
-        "Админ-панель.\n\n"
-        "Для назначения/удаления админов используйте команды:\n"
-        "/admin_add <max_id>\n"
-        "/admin_del <max_id>"
+        "\u0410\u0434\u043c\u0438\u043d-\u043f\u0430\u043d\u0435\u043b\u044c.\n\n"
+        "\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 inline-\u043a\u043d\u043e\u043f\u043a\u0438 \u043d\u0438\u0436\u0435.\n"
+        "\u0414\u043b\u044f \u043d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u044f \u0438\u043b\u0438 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430 \u0431\u043e\u0442 \u0437\u0430\u043f\u0440\u043e\u0441\u0438\u0442 max_id \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f."
     )
     send_text(chat_id, text, attachments=build_admin_keyboard())
 

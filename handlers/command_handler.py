@@ -20,7 +20,13 @@ from handlers.lesson_handler import (
     start_lesson,
 )
 from services.context import dp
-from services.message_utils import get_chat_id, get_text, get_user_id
+from services.keyboards import build_admin_keyboard
+from services.message_utils import (
+    get_chat_id,
+    get_text,
+    get_user_id,
+    parse_number_answers,
+)
 from services.messaging import send_text
 from services.runtime_state import RuntimeSession, runtime_sessions
 from services.user_flow import (
@@ -33,6 +39,27 @@ from services.user_flow import (
 )
 
 logger = logging.getLogger(__name__)
+
+ADMIN_ADD_MODE = "await_admin_add_id"
+ADMIN_DEL_MODE = "await_admin_del_id"
+
+
+def _extract_target_id(text: str) -> int | None:
+    raw = text.strip()
+    if not raw:
+        return None
+
+    try:
+        target_id = int(raw)
+    except ValueError:
+        numbers = parse_number_answers(raw)
+        if not numbers:
+            return None
+        target_id = numbers[0]
+
+    if target_id <= 0:
+        return None
+    return target_id
 
 
 async def process_command(message: Message, command: str, args: str) -> None:
@@ -61,6 +88,7 @@ async def process_command(message: Message, command: str, args: str) -> None:
         send_text(chat_id, "Отправьте номер телефона в формате +7XXXXXXXXXX")
         return
 
+    # Backward-compatible command fallbacks.
     if command in {"/lesson1", "/lesson2", "/lesson3", "/lesson4", "/lesson5", "/lesson6", "/lesson7"}:
         index = int(command[-1])
         await start_lesson(message, f"lesson_{index}")
@@ -95,44 +123,53 @@ async def process_command(message: Message, command: str, args: str) -> None:
         await admin_export(message)
         return
 
-    if command == "/admin_add":
-        if not await is_admin(messenger_id):
-            send_text(chat_id, "Недостаточно прав.")
-            return
-        try:
-            target_id = int(args.strip())
-        except ValueError:
-            send_text(chat_id, "Использование: /admin_add <max_id>")
-            return
-        await admin_add(message, target_id)
-        return
-
-    if command == "/admin_del":
-        if not await is_admin(messenger_id):
-            send_text(chat_id, "Недостаточно прав.")
-            return
-        try:
-            target_id = int(args.strip())
-        except ValueError:
-            send_text(chat_id, "Использование: /admin_del <max_id>")
-            return
-        await admin_delete_user(message, target_id)
-        return
-
-    send_text(chat_id, "Неизвестная команда. Откройте меню: /menu")
+    send_text(chat_id, "Используйте inline-кнопки под сообщениями. Откройте меню: /menu")
 
 
 async def process_non_command(message: Message) -> None:
     chat_id = get_chat_id(message)
     messenger_id = get_user_id(message)
     session_data = runtime_sessions.get(messenger_id)
+    incoming_text = get_text(message)
 
     if session_data is None:
         send_text(chat_id, "Используйте /start или /menu")
         return
 
     if session_data.mode == "await_phone":
-        await authorize_user_by_phone(message, get_text(message))
+        await authorize_user_by_phone(message, incoming_text)
+        return
+
+    if session_data.mode == ADMIN_ADD_MODE:
+        if not await is_admin(messenger_id):
+            runtime_sessions.pop(messenger_id, None)
+            send_text(chat_id, "Недостаточно прав.")
+            return
+
+        target_id = _extract_target_id(incoming_text)
+        if target_id is None:
+            send_text(chat_id, "Введите корректный max_id пользователя числом.")
+            return
+
+        runtime_sessions.pop(messenger_id, None)
+        await admin_add(message, target_id)
+        await open_admin_menu(message)
+        return
+
+    if session_data.mode == ADMIN_DEL_MODE:
+        if not await is_admin(messenger_id):
+            runtime_sessions.pop(messenger_id, None)
+            send_text(chat_id, "Недостаточно прав.")
+            return
+
+        target_id = _extract_target_id(incoming_text)
+        if target_id is None:
+            send_text(chat_id, "Введите корректный max_id пользователя числом.")
+            return
+
+        runtime_sessions.pop(messenger_id, None)
+        await admin_delete_user(message, target_id)
+        await open_admin_menu(message)
         return
 
     send_text(chat_id, "Используйте inline-кнопки под сообщениями.")
@@ -146,16 +183,20 @@ async def process_callback(message: Message, payload: str) -> None:
         runtime_sessions.pop(messenger_id, None)
         await render_menu(message)
         return
+
     if payload == "menu:auth":
         runtime_sessions[messenger_id] = RuntimeSession(mode="await_phone")
         send_text(chat_id, "Отправьте номер телефона в формате +7XXXXXXXXXX")
         return
+
     if payload == "menu:stats":
         await send_user_stats(message)
         return
+
     if payload == "menu:exam":
         await start_lesson(message, "exam")
         return
+
     if payload == "menu:admin":
         if not await is_admin(messenger_id):
             send_text(chat_id, "Недостаточно прав.")
@@ -171,18 +212,39 @@ async def process_callback(message: Message, payload: str) -> None:
         await start_lesson(message, f"lesson_{lesson_index}")
         return
 
-    if payload == "admin:stats":
-        if await is_admin(messenger_id):
+    if payload.startswith("admin:"):
+        if not await is_admin(messenger_id):
+            send_text(chat_id, "Недостаточно прав.")
+            return
+
+        if payload == "admin:stats":
             await admin_stats(message)
-        return
-    if payload == "admin:export":
-        if await is_admin(messenger_id):
+            return
+
+        if payload == "admin:export":
             await admin_export(message)
-        return
-    if payload == "admin:help":
-        if await is_admin(messenger_id):
-            send_text(chat_id, "Команды:\n/admin_add <max_id>\n/admin_del <max_id>")
-        return
+            return
+
+        if payload == "admin:add":
+            runtime_sessions[messenger_id] = RuntimeSession(mode=ADMIN_ADD_MODE)
+            send_text(chat_id, "Введите max_id пользователя для назначения администратором.")
+            return
+
+        if payload == "admin:del":
+            runtime_sessions[messenger_id] = RuntimeSession(mode=ADMIN_DEL_MODE)
+            send_text(chat_id, "Введите max_id пользователя для удаления.")
+            return
+
+        if payload == "admin:help":
+            send_text(
+                chat_id,
+                "Как работать с админ-правами:\n"
+                "1. Нажмите «Назначить админа» или «Удалить пользователя».\n"
+                "2. Отправьте max_id пользователя числом.\n"
+                "3. После выполнения бот вернет вас в админ-меню.",
+                attachments=build_admin_keyboard(),
+            )
+            return
 
     if payload.startswith("lesson:pick:"):
         try:
@@ -191,15 +253,19 @@ async def process_callback(message: Message, payload: str) -> None:
             return
         await on_lesson_pick(message, option_index)
         return
+
     if payload == "lesson:submit":
         await on_lesson_submit(message)
         return
+
     if payload == "lesson:clear":
         await on_lesson_clear(message)
         return
+
     if payload == "lesson:finish":
         await finalize_lesson(message)
         return
+
     if payload == "lesson:restart":
         await on_lesson_restart(message)
         return
@@ -211,6 +277,7 @@ async def process_callback(message: Message, payload: str) -> None:
             return
         await on_exam_change(message, item_index=item_index, delta=1)
         return
+
     if payload.startswith("exam:dec:"):
         try:
             item_index = int(payload.rsplit(":", 1)[1])
@@ -218,12 +285,15 @@ async def process_callback(message: Message, payload: str) -> None:
             return
         await on_exam_change(message, item_index=item_index, delta=-1)
         return
+
     if payload == "exam:clear":
         await on_exam_clear(message)
         return
+
     if payload == "exam:submit":
         await on_exam_submit(message)
         return
+
     if payload == "exam:noop":
         return
 
@@ -260,7 +330,9 @@ async def on_message_callback(event):
         payload = getattr(event.callback, "payload", "") or ""
         if message is None or not payload:
             return
+
         await process_callback(message, payload)
+
         try:
             await event.answer()
         except Exception:
