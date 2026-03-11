@@ -11,6 +11,8 @@ from requests.exceptions import JSONDecodeError
 
 from db import User
 
+# from db import User
+
 logger = logging.getLogger(__name__)
 
 
@@ -222,6 +224,7 @@ class AmoCRMWrapper:
 
         response = requests.post("https://{}.amocrm.ru/oauth2/access_token".format(self.amocrm_subdomain),
                                  json=data).json()
+        logger.error(f'{response}')
 
         access_token = response["access_token"]
         refresh_token = response["refresh_token"]
@@ -459,38 +462,38 @@ class AmoCRMWrapper:
         logger.info(f'Запись ID_telegram: {tg_id} и username: {username} в контакт покупателя: {id_contact}\n'
                     f'Статус операции: {response.status_code}')
 
-    def send_lead_to_amo(self, pipeline_id: int, status_id: int, contact_id: int, utm_metriks_fields: dict,
-                         user: User):
-        custom_fields_values = []
-        for metrik, metrika_id in utm_metriks_fields.items():
-            custom_fields_values.append({
-                'field_id': metrika_id,
-                'values': [
-                    {
-                        'value': getattr(user, metrik)
-                    }
-                ]
-            })
-        url = f'/api/v4/leads'
-        data = [{
-            'name': 'Автосделка из бота HiTE_PRO_Education',
-            'pipeline_id': int(pipeline_id),
-            'created_by': 0,
-            'status_id': int(status_id),
-            'responsible_user_id': 453498,
-            'custom_fields_values': custom_fields_values,
-            '_embedded': {
-                'contacts': [
-                    {
-                        'id': int(contact_id)
-                    }
-                ]
-            }
-
-        },]
-        response = self._base_request(type='post', endpoint=url, data=data)
-        lead_id = response.json().get('_embedded').get('leads')[0].get('id')
-        return lead_id
+    # def send_lead_to_amo(self, pipeline_id: int, status_id: int, contact_id: int, utm_metriks_fields: dict,
+    #                      user: User):
+    #     custom_fields_values = []
+    #     for metrik, metrika_id in utm_metriks_fields.items():
+    #         custom_fields_values.append({
+    #             'field_id': metrika_id,
+    #             'values': [
+    #                 {
+    #                     'value': getattr(user, metrik)
+    #                 }
+    #             ]
+    #         })
+    #     url = f'/api/v4/leads'
+    #     data = [{
+    #         'name': 'Автосделка из бота HiTE_PRO_Education',
+    #         'pipeline_id': int(pipeline_id),
+    #         'created_by': 0,
+    #         'status_id': int(status_id),
+    #         'responsible_user_id': 453498,
+    #         'custom_fields_values': custom_fields_values,
+    #         '_embedded': {
+    #             'contacts': [
+    #                 {
+    #                     'id': int(contact_id)
+    #                 }
+    #             ]
+    #         }
+    #
+    #     },]
+    #     response = self._base_request(type='post', endpoint=url, data=data)
+    #     lead_id = response.json().get('_embedded').get('leads')[0].get('id')
+    #     return lead_id
 
     def push_lead_to_status(self, lead_id: str, pipeline_id: int, status_id: int):
         url = f'/api/v4/leads/{int(lead_id)}'
@@ -599,8 +602,8 @@ class AmoCRMWrapper:
         logger.info(f'Статус код запроса записей покупателя: {response.status_code}')
         return response.json()
 
-    def create_new_contact(self, first_name: str, last_name: str, phone: str, tg_id_field: int, tg_id: str,
-                           username_id: int, username: str):
+    def create_new_contact(self, first_name: str, last_name: str, phone: str
+                           ):
         url = '/api/v4/contacts'
         data = [{
             'first_name': first_name,
@@ -613,18 +616,6 @@ class AmoCRMWrapper:
                       "value": str(phone)
                       },]
                  },
-                {"field_id": tg_id_field,
-                 "values": [
-                     {
-                      "value": str(tg_id)
-                      }, ]
-                 },
-                {"field_id": username_id,
-                 "values": [
-                     {
-                         "value": str(username)
-                     }, ]
-                 }
             ],
         }]
         response = self._base_request(type='post', endpoint=url, data=data)
@@ -657,14 +648,14 @@ class AmoCRMWrapper:
             logger.error('TG_ID не добавлен в контакт')
             return False
 
-    def find_lead_by_contact_in_pipeline_stage(
+    def _find_lead_by_contact_in_pipeline_stage_old(
             self,
             contact_id: str,
-            pipeline_id: str,
-            status_id: str,
+            pipeline_id: int,
+            status_id: int,
             *,
             with_entities: bool = True
-    ) -> Optional[dict]:
+    ) -> Optional[int]:
         """
         Найти сделку по ID контакта в конкретной воронке (pipeline_id) и на конкретном этапе (status_id).
 
@@ -700,6 +691,7 @@ class AmoCRMWrapper:
             raise RuntimeError(f"amoCRM error {response.status_code}: {response.text}")
 
         payload = response.json()
+        pprint(payload, indent=4)
 
         # Если сделок нет, amoCRM обычно возвращает {} или {"_page":..., "_embedded": {...}}
         embedded = payload.get("_embedded", {})
@@ -729,24 +721,233 @@ class AmoCRMWrapper:
 
         return None
 
+    def find_lead_by_contact_in_pipeline_stage(
+            self,
+            contact_id: str,
+            pipeline_id: int,
+            status_id: int,
+            *,
+            with_entities: bool = True
+    ) -> Optional[int]:
+        page = 1
+        limit = 250
+        target_contact_id = int(contact_id)
+        target_pipeline_id = int(pipeline_id)
+        target_status_id = int(status_id)
+
+        while True:
+            query = (
+                f'filter[pipeline_id][]=3616530&'
+                f'filter[statuses][0][pipeline_id]=3616530&'
+                f'filter[statuses][0][status_id]=47244117&'
+                f'with=contacts&'
+                f'limit={limit}&'
+                f'page={page}'
+            )
+
+            response = self._base_request(
+                type="get_param",
+                endpoint="/api/v4/leads",
+                parameters=query,
+            )
+            if response.status_code >= 400:
+                raise RuntimeError(f"amoCRM error {response.status_code}: {response.text}")
+
+            payload = response.json()
+
+            leads = payload.get("_embedded", {}).get("leads", []) or []
+            if not leads:
+                return None
+
+            for lead in leads:
+                if int(lead.get("pipeline_id", -1)) != target_pipeline_id:
+                    continue
+                if int(lead.get("status_id", -1)) != target_status_id:
+                    continue
+
+                lead_contacts = lead.get("_embedded", {}).get("contacts", []) or []
+                if not lead_contacts:
+                    continue
+
+                main_contact = None
+                for lead_contact in lead_contacts:
+                    is_main = lead_contact.get("is_main")
+                    if is_main is True or str(is_main).lower() in {"1", "true"}:
+                        main_contact = lead_contact
+                        break
+
+                if main_contact is None and len(lead_contacts) == 1:
+                    main_contact = lead_contacts[0]
+                if main_contact is None:
+                    continue
+
+                try:
+                    main_contact_id = int(main_contact.get("id", -1))
+                except (TypeError, ValueError):
+                    continue
+
+                if main_contact_id == target_contact_id:
+                    return lead.get("id")
+
+            if not payload.get("_links", {}).get("next"):
+                return None
+
+            page += 1
+
+
+    def test(self):
+        endpoint = "/api/v4/leads"
+        page = 1
+        limit = 250
+        while True:
+            logger.info(f'Запрос сделок, страница: {page}')
+            query = (
+                f'filter[pipeline_id][]=3616530&'
+                f'filter[statuses][0][pipeline_id]=3616530&'
+                f'filter[statuses][0][status_id]=47244117&'
+                f'with=contacts&'
+                f'limit={limit}&'
+                f'page={page}'
+            )
+
+            response = self._base_request(endpoint=endpoint, type='get_param', parameters=query)
+
+            page_items = response.json().get('_embedded', {}).get('leads', [])
+            if len(page_items) < limit:
+                break
+            page += 1
+            pprint(page_items, indent=4)
+
+    def send_lead_to_amo(self, pipeline_id: int, status_id: int, contact_id: int, utm_metriks_fields: dict,
+                         user: User):
+        custom_fields_values = []
+        for metrik, metrika_id in utm_metriks_fields.items():
+            custom_fields_values.append({
+                'field_id': metrika_id,
+                'values': [
+                    {
+                        'value': getattr(user, metrik)
+                    }
+                ]
+            })
+        url = f'/api/v4/leads'
+        data = [{
+            'name': 'Автосделка из бота MAX',
+            'pipeline_id': int(pipeline_id),
+            'created_by': 0,
+            'status_id': int(status_id),
+            'responsible_user_id': 453498,
+            'custom_fields_values': custom_fields_values,
+            '_embedded': {
+                'contacts': [
+                    {
+                        'id': int(contact_id)
+                    }
+                ]
+            }
+
+        }, ]
+        response = self._base_request(type='post', endpoint=url, data=data)
+        lead_id = response.json().get('_embedded').get('leads')[0].get('id')
+        return lead_id
+
+    def find_lead_by_contact_in_pipeline_stage_new(
+            self,
+            contact_id: str,
+            pipeline_id: str,
+            status_id: str,
+            *,
+            with_entities: bool = True
+    ) -> Optional[int]:
+        page = 1
+        limit = 250
+        target_contact_id = int(contact_id)
+        target_pipeline_id = int(pipeline_id)
+        target_status_id = int(status_id)
+
+        while True:
+            query = (
+                f'filter[pipeline_id][]=3616530&'
+                f'filter[statuses][0][pipeline_id]=3616530&'
+                f'filter[statuses][0][status_id]=47244117&'
+                f'with=contacts&'
+                f'limit={limit}&'
+                f'page={page}'
+            )
+
+            response = self._base_request(
+                type="get_param",
+                endpoint="/api/v4/leads",
+                parameters=query,
+            )
+            if response.status_code >= 400:
+                raise RuntimeError(f"amoCRM error {response.status_code}: {response.text}")
+
+            payload = response.json()
+
+            leads = payload.get("_embedded", {}).get("leads", []) or []
+            if not leads:
+                return None
+
+            for lead in leads:
+                if int(lead.get("pipeline_id", -1)) != target_pipeline_id:
+                    continue
+                if int(lead.get("status_id", -1)) != target_status_id:
+                    continue
+
+                lead_contacts = lead.get("_embedded", {}).get("contacts", []) or []
+                if not lead_contacts:
+                    continue
+
+                main_contact = None
+                for lead_contact in lead_contacts:
+                    is_main = lead_contact.get("is_main")
+                    if is_main is True or str(is_main).lower() in {"1", "true"}:
+                        main_contact = lead_contact
+                        break
+
+                if main_contact is None and len(lead_contacts) == 1:
+                    main_contact = lead_contacts[0]
+                if main_contact is None:
+                    continue
+
+                try:
+                    main_contact_id = int(main_contact.get("id", -1))
+                except (TypeError, ValueError):
+                    continue
+
+                if main_contact_id == target_contact_id:
+                    return lead.get("id")
+
+            if not payload.get("_links", {}).get("next"):
+                return None
+
+            page += 1
 
 
 
 
-if __name__ == '__main__':
-    from config.config import load_config, Config
-    config: Config = load_config()
 
-    amo_api = AmoCRMWrapper(
-        path=config.amo_config.path_to_env,
-        amocrm_subdomain=config.amo_config.amocrm_subdomain,
-        amocrm_client_id=config.amo_config.amocrm_client_id,
-        amocrm_redirect_url=config.amo_config.amocrm_redirect_url,
-        amocrm_client_secret=config.amo_config.amocrm_client_secret,
-        amocrm_secret_code=config.amo_config.amocrm_secret_code,
-        amocrm_access_token=config.amo_config.amocrm_access_token,
-        amocrm_refresh_token=config.amo_config.amocrm_refresh_token
-    )
-    amo_api.init_oauth2()
+
+
+
+
+
+
+# if __name__ == '__main__':
+#     from config.config import load_config, Config
+#     config: Config = load_config()
+#
+#     amo_api = AmoCRMWrapper(
+#         path=config.amo_config.path_to_env,
+#         amocrm_subdomain=config.amo_config.amocrm_subdomain,
+#         amocrm_client_id=config.amo_config.amocrm_client_id,
+#         amocrm_redirect_url=config.amo_config.amocrm_redirect_url,
+#         amocrm_client_secret=config.amo_config.amocrm_client_secret,
+#         amocrm_secret_code=config.amo_config.amocrm_secret_code,
+#         amocrm_access_token=config.amo_config.amocrm_access_token,
+#         amocrm_refresh_token=config.amo_config.amocrm_refresh_token
+#     )
+#     amo_api.init_oauth2()
 
 
