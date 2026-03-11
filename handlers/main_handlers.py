@@ -271,7 +271,7 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
     await context.set_state(Main_menu.menu)
     builder = await get_main_menu(user=user, session=session)
 
-    await event.message.edit(
+    await event.message.answer(
         text=welcome_message,
         attachments=[
             builder.as_markup(),
