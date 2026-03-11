@@ -55,3 +55,51 @@ async def get_lessons_buttons(user: User, session: AsyncSession) -> dict:
 
 
     return lessons_access
+
+
+async def check_push_to_new_status(lesson_key: str, lead_status: int) -> bool:
+    lead_status = int(lead_status)
+    logger.info(f'Входящие lesson_key: {lesson_key}, lead_status: {lead_status}')
+    statuses_list = [
+        {'key':'admitted_to_training',
+         'id': 47244117},
+        {'key': 'authorized_in_bot',
+         'id': 65758021},
+        {'key': 'compleat_lesson_1',
+         'id': 35444481},
+        {'key': 'compleat_lesson_2',
+         'id': 35444484},
+        {'key': 'compleat_lesson_3',
+         'id': 41608782},
+        {'key': 'compleat_lesson_4',
+         'id': 41608785},
+        {'key': 'compleat_lesson_5',
+         'id': 41608788},
+        {'key': 'compleat_lesson_6',
+         'id': 41608791},
+        {'key': 'compleat_lesson_7',
+         'id': 58699973},
+        {'key': 'ready_to_exam',
+         'id': 41608797},
+        {'key': 'compleat_exam',
+         'id': 41608800},
+        {'key': 'compleat_training',
+         'id': 35440800}
+        ]
+    lesson_index = 0
+    lead_index = 0
+
+    for index, lesson in enumerate(statuses_list):
+        if lesson['key'] == lesson_key:
+            lesson_index = index
+
+        if lesson['id'] == lead_status:
+            lead_index = index
+    logger.info(f'Индекс lesson_key: {lesson_key}, lead_status: {lead_status}')
+
+    if lead_index >= lesson_index:
+        logger.info('Функция возвратила False')
+        return False
+    else:
+        logger.info('Функция возвратила True')
+        return True
