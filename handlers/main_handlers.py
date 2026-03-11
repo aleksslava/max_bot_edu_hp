@@ -66,7 +66,7 @@ async def bot_start(event: BotStarted, context: MemoryContext, session: AsyncSes
 @main_router.message_created(Command('start'))
 async def start(event: MessageCreated, context: MemoryContext, session: AsyncSession):
     # Получаем id пользователя в мах
-    max_id = event.user.user_id
+    max_id = event.message.sender.user_id
     logger.info(f'Запущен бот пользователем max_id:{max_id}')
 
     # Запрос в БД на наличие пользователя
@@ -106,7 +106,7 @@ async def start(event: MessageCreated, context: MemoryContext, session: AsyncSes
 @main_router.message_callback(F.callback.payload == 'main_menu', Main_menu.menu)
 async def main_menu(event: MessageCallback, context: MemoryContext, session: AsyncSession):
     # Получаем id пользователя в мах
-    max_id = event.user.user_id
+    max_id = event.callback.sender.user_id
     logger.info(f'Запущен бот пользователем max_id:{max_id}')
 
     # Запрос в БД на наличие пользователя
@@ -150,7 +150,7 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
     status_fields = amo_fields.get('statuses')
     utm_metriks = {}
     attachments = (event.message.body.attachments if event.message and event.message.body else []) or []
-    max_id = event.user.user_id
+    max_id = event.message.sender.user_id
     phone = None
     for att in attachments:
         if att.type == AttachmentType.CONTACT and att.payload:
