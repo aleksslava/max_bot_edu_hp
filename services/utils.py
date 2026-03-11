@@ -310,42 +310,42 @@ def extract_phone_from_vcf(vcf: str) -> str | None:
 
 
 
-def get_main_menu(user: User, session: AsyncSession) -> InlineKeyboardBuilder:
+async def get_main_menu(user: User, session: AsyncSession) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
 
-    lesson_access = get_lessons_buttons(user, session)
+    lesson_access = await get_lessons_buttons(user, session)
 
     builder.add(
         CallbackButton(
-            text='Урок_1',
+            text=lesson_access['lesson_1'],
             payload='lesson_1'
         ),
         CallbackButton(
-            text='Урок 2',
+            text=lesson_access['lesson_2'],
             payload='lesson_2',
         ),
         CallbackButton(
-            text='Урок 3',
+            text=lesson_access['lesson_3'],
             payload='lesson_3',
         ),
         CallbackButton(
-            text='Урок 4',
+            text=lesson_access['lesson_4'],
             payload='lesson_4',
         ),
         CallbackButton(
-            text='Урок 5',
+            text=lesson_access['lesson_5'],
             payload='lesson_5',
         ),
         CallbackButton(
-            text='Урок 6',
+            text=lesson_access['lesson_6'],
             payload='lesson_6',
         ),
         CallbackButton(
-            text='Урок 7',
+            text=lesson_access['lesson_7'],
             payload='lesson_7',
         ),
         CallbackButton(
-            text='Экзамен',
+            text=lesson_access['exam'],
             payload='exam',
         )
     )

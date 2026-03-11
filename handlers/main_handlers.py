@@ -50,7 +50,7 @@ async def bot_start(event: BotStarted, context: MemoryContext, session: AsyncSes
         )
     else:
         await context.set_state(Main_menu.menu)
-        builder = get_main_menu()
+        builder = await get_main_menu(user=user, session=session)
 
         await event.bot.send_message(
             chat_id=event.chat_id,
@@ -92,7 +92,7 @@ async def start(event: MessageCreated, context: MemoryContext, session: AsyncSes
 
     else:
         await context.set_state(Main_menu.menu)
-        builder = get_main_menu()
+        builder = await get_main_menu(user=user, session=session)
 
 
         await event.message.answer(
@@ -131,7 +131,7 @@ async def main_menu(event: MessageCallback, context: MemoryContext, session: Asy
 
     else:
         await context.set_state(Main_menu.menu)
-        builder = get_main_menu()
+        builder = await get_main_menu(user=user, session=session)
 
 
 
@@ -269,7 +269,7 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
     await session.refresh(user)
 
     await context.set_state(Main_menu.menu)
-    builder = get_main_menu()
+    builder = await get_main_menu(user=user, session=session)
 
     await event.message.edit(
         text=welcome_message,
