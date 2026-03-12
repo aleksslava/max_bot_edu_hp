@@ -17,7 +17,7 @@ from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 from service.questions_lexicon import welcome_message
 from fsm.lesson_2 import Lesson_2
 from fsm.main_states import Main_menu
-from service.service import check_push_to_new_status
+from service.service import check_push_to_new_status, lesson_access
 from services.utils import build_question_inline_keyboard, proceed_radio_button, build_question_multiply_keyboard, \
     proceed_multiply_button, get_question_text, proceed_result, main_menu_button
 from service.questions_lexicon import questions_2 as lesson
@@ -36,44 +36,49 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
     user = result.scalar_one_or_none()
     if user is None:
         raise ValueError(f'Пользователь не найден при переходе в урок 1, tg_id: {max_id}')
-    if user.start_edu is None:
-        user.start_edu = datetime.datetime.utcnow()
-    lesson = LessonResult(
-        user_id=user.id,
-        lesson_key='lesson_2',
-    )
-    session.add(lesson)
-    await session.commit()
-    await session.refresh(lesson)
-    logger.info(f'Запущен второй урок пользователем max_id:{max_id}. ID урока в БД - {lesson.id}')
-    context_data = await context.get_data()
-    results = context_data.setdefault('results', {})
-    results['lesson_id'] = lesson.id
 
-    await context.set_state(Lesson_2.vebinar)
-    if event.message is None:
-        return
+    lesson_deny = await lesson_access(user=user, session=session, lesson_key='lesson_2')
+    if not lesson_deny:
+        await event.message.answer('Доступ закрыт!😢\n\nТребуется успешное прохождение урока №1!', notify=True)
+    else:
+        if user.start_edu is None:
+            user.start_edu = datetime.datetime.utcnow()
+        lesson = LessonResult(
+            user_id=user.id,
+            lesson_key='lesson_2',
+        )
+        session.add(lesson)
+        await session.commit()
+        await session.refresh(lesson)
+        logger.info(f'Запущен второй урок пользователем max_id:{max_id}. ID урока в БД - {lesson.id}')
+        context_data = await context.get_data()
+        results = context_data.setdefault('results', {})
+        results['lesson_id'] = lesson.id
 
-    kb = InlineKeyboardBuilder()
-    kb.add(
-        CallbackButton(
-            text='Вперед',
-            payload='next'),
+        await context.set_state(Lesson_2.vebinar)
+        if event.message is None:
+            return
+
+        kb = InlineKeyboardBuilder()
+        kb.add(
+            CallbackButton(
+                text='Вперед',
+                payload='next'),
+            )
+
+        token = video_tokens.get('hp_lesson_2')
+        attachment = AttachmentUpload(
+            type=UploadType.VIDEO,
+            payload=AttachmentPayload(token=token),
         )
 
-    token = video_tokens.get('hp_lesson_2')
-    attachment = AttachmentUpload(
-        type=UploadType.VIDEO,
-        payload=AttachmentPayload(token=token),
-    )
 
-
-    await event.message.edit(
-        text='Видеозапись урока 2',
-        attachments=[
-            attachment,
-            kb.as_markup()],
-    )
+        await event.message.edit(
+            text='Видеозапись урока 2',
+            attachments=[
+                attachment,
+                kb.as_markup()],
+        )
 #  Вход в первый вопрос
 @lesson_2.message_callback(F.callback.payload == 'next', Lesson_2.vebinar)
 async def question_1(event: MessageCallback, context: MemoryContext, video_tokens: dict[str, str]):

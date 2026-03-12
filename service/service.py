@@ -103,3 +103,23 @@ async def check_push_to_new_status(lesson_key: str, lead_status: int) -> bool:
     else:
         logger.info('Функция возвратила True')
         return True
+
+
+async def lesson_access(user: User, session: AsyncSession, lesson_key: str) -> bool:
+    if user is None or user.id is None:
+        return False
+    required_key = ''
+    for index, lesson in enumerate(lessons):
+        if lesson['title'] == lesson_key:
+            required_key = lessons[index - 1].get('title')
+
+    result = await session.execute(
+        select(LessonResult.id)
+        .where(
+            LessonResult.user_id == user.id,
+            LessonResult.lesson_key == required_key,
+            LessonResult.compleat.is_(True),
+        )
+        .limit(1)
+    )
+    return result.scalar_one_or_none() is not None
