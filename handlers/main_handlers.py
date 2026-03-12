@@ -232,13 +232,14 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
                                                        utm_metriks_fields=utm_metriks,
                                                        user=user
                                                        )
+                user.amo_deal_id = new_lead_id
+                session.add(user)
+                await session.commit()
+                await session.refresh(user)
+
                 response = amo_api.push_lead_to_status(pipeline_id=pipelines.get('hite_pro_education'),
                                                        status_id=status_fields.get('authorized_in_bot'),
                                                        lead_id=str(user.amo_deal_id))
-                user.amo_deal_id = new_lead_id
-            session.add(user)
-            await session.commit()
-            await session.refresh(user)
 
     else:
         """Если контакт в АМО не найден, то создаём новый контакт, сделку, запись USER в таблице"""
