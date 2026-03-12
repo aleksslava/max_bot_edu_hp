@@ -50,7 +50,7 @@ amo_api = AmoCRMWrapper(
 
 
 dp = Dispatcher()
-dp.include_routers(main_router, lesson_1, lesson_2, lesson_3, lesson_4, lesson_5, lesson_6, lesson_7, exam_router, error_handler)
+dp.include_routers(main_router, lesson_1, lesson_2, lesson_3, lesson_4, lesson_5, lesson_6, lesson_7, exam_router)
 
 
 async def run() -> None:
