@@ -399,7 +399,7 @@ async def result(event: MessageCallback, context: MemoryContext, session: AsyncS
             lesson_obj.compleat = compleat_lesson
             lesson_obj.completed_at = datetime.datetime.utcnow()
             if lesson is not None:
-                user = lesson.user
+                user = lesson_obj.user
 
             await session.commit()
             await session.refresh(lesson_obj)
