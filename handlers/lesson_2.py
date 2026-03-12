@@ -19,7 +19,7 @@ from fsm.lesson_2 import Lesson_2
 from fsm.main_states import Main_menu
 from service.service import check_push_to_new_status, lesson_access
 from services.utils import build_question_inline_keyboard, proceed_radio_button, build_question_multiply_keyboard, \
-    proceed_multiply_button, get_question_text, proceed_result, main_menu_button
+    proceed_multiply_button, get_question_text, proceed_result, main_menu_button, get_main_menu
 from service.questions_lexicon import questions_2 as lesson
 from config.config import BASE_DIR
 
@@ -39,8 +39,16 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
 
     lesson_deny = await lesson_access(user=user, session=session, lesson_key='lesson_2')
     if not lesson_deny:
-        await event.message.answer(
+        await event.message.edit(
             text='Доступ закрыт!😢\n\nТребуется успешное прохождение урока №1!', notify=False)
+        builder = await get_main_menu(user=user, session=session)
+
+        await event.message.answer(
+            text=welcome_message,
+            attachments=[
+                builder.as_markup(),
+            ]
+        )
         return
     else:
         if user.start_edu is None:
