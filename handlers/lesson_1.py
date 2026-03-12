@@ -376,7 +376,7 @@ async def result(event: MessageCallback, context: MemoryContext, session: AsyncS
                  amo_api: AmoCRMWrapper, amo_fields: dict):
     max_id = event.callback.user.user_id
     result = await context.get_data()
-    lesson_id = result.get('lesson_id')
+    lesson_id = result.get('results').get('lesson_id')
     logger.info(f'Обработка результатов первого урока - id = {lesson_id}')
     logger.info(result)
     pipelines = amo_fields.get('pipelines')
