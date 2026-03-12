@@ -187,11 +187,12 @@ async def question_4(event: MessageCallback, context: MemoryContext):
     question_number = 4
     await context.set_state(Lesson_6.question_4)
 
-    kb: InlineKeyboardBuilder = build_question_inline_keyboard(lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
-                                                               text_on_button=False)
-    await event.message.edit(text=get_question_text(questions=lesson, lesson_number=lesson_number, question_number=question_number,
-                                                    with_answers=True),
-                               attachments=[kb.as_markup()])
+    kb: InlineKeyboardBuilder = build_question_multiply_keyboard(
+        lesson.get(f'Lesson_{lesson_number}:question_{question_number}'))
+    await event.message.edit(
+        text=get_question_text(questions=lesson, lesson_number=lesson_number, question_number=question_number,
+                               is_radio=False),
+        attachments=[kb.as_markup()])
 
 
 # Обработка четвертого вопроса
@@ -199,18 +200,24 @@ async def question_4(event: MessageCallback, context: MemoryContext):
 async def proceed_question_4(event: MessageCallback, context: MemoryContext):
     question_number = 4
     choose = event.callback.payload
-    result_question = proceed_radio_button(question_data=lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
-                                           choose_payload=choose)
+    now_choose = await context.get_data()
+    now_choose = now_choose.get('results', {}).get(f'question_{question_number}', None)
+    result_question = proceed_multiply_button(
+        question_data=lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
+        choose_payload=choose,
+        now_choose=now_choose)
 
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'question_{question_number}'] = result_question
 
-    kb: InlineKeyboardBuilder = build_question_inline_keyboard(lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
-                                                               choose_payload=choose, text_on_button=False)
-    await event.message.edit(text=get_question_text(questions=lesson, lesson_number=lesson_number, question_number=question_number,
-                                                    with_answers=True),
-                             attachments=[kb.as_markup()])
+    kb: InlineKeyboardBuilder = build_question_multiply_keyboard(
+        lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
+        choose_payload=result_question)
+    await event.message.edit(
+        text=get_question_text(questions=lesson, lesson_number=lesson_number, question_number=question_number,
+                               is_radio=False),
+        attachments=[kb.as_markup()])
 
 
 #  Вход во пятый вопрос
