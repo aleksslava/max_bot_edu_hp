@@ -36,7 +36,7 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
     result = await session.execute(select(User).where(User.max_user_id == max_id))
     user = result.scalar_one_or_none()
     if user is None:
-        raise ValueError(f'Пользователь не найден при переходе в урок 1, tg_id: {max_id}')
+        raise ValueError(f'Пользователь не найден при переходе в урок 1, max_id: {max_id}')
     if user.start_edu is None:
         user.start_edu = datetime.datetime.utcnow()
     lesson = LessonResult(
@@ -46,7 +46,7 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
     session.add(lesson)
     await session.commit()
     await session.refresh(lesson)
-    logger.info(f'Запущен первый урок пользователем tg_ID:{max_id}. ID урока в БД - {lesson.id}')
+    logger.info(f'Запущен первый урок пользователем max_id:{max_id}. ID урока в БД - {lesson.id}')
     await context.set_state(Lesson_1.vebinar)
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
