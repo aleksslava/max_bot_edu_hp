@@ -400,7 +400,7 @@ async def result(event: MessageCallback, context: MemoryContext, session: AsyncS
                 user = lesson.user
 
             await session.commit()
-            await session.refresh(lesson)
+            await session.refresh(lesson_obj)
             await session.refresh(user)
 
             # Отправляем примечание в сделку с обучением
