@@ -309,7 +309,7 @@ async def question_8(event: MessageCallback, context: MemoryContext):
 async def proceed_question_8(event: MessageCallback, context: MemoryContext):
     question_number = 8
     choose = event.callback.payload
-    result_question = proceed_radio_button(question_data=lesson.get('Lesson_1:question_8'),
+    result_question = proceed_radio_button(question_data=lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
                                            choose_payload=choose)
 
     context_data = await context.get_data()
