@@ -214,12 +214,17 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
                 last_name = contact_data.get("last_name"),
                 amo_contact_id = contact_data.get("amo_contact_id"),
             )
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
             lead_data = processing_lead(amo_api=amo_api, contact_id=contact_data["amo_contact_id"],
                                         pipeline_id=pipelines["hite_pro_education"],
                                         status_id=status_fields['admitted_to_training'], )
 
             if lead_data:  # Данные сделки найдены в амосрм
                 user.amo_deal_id = lead_data["amo_deal_id"]
+                await session.commit()
+                await session.refresh(user)
                 logger.info(
                     f'Для пользователя телефон: {phone}, max_id: {max_id} найдена сделка в амосрм')
 
@@ -233,7 +238,7 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
                                                        user=user
                                                        )
                 user.amo_deal_id = new_lead_id
-                session.add(user)
+
                 await session.commit()
                 await session.refresh(user)
 

@@ -29,7 +29,10 @@ logger = logging.getLogger(__name__)
 exam_router = Router()
 
 @exam_router.message_callback(F.callback.payload == 'exam')
-async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens: dict[str, str], session: AsyncSession,):
+async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens: dict[str, str], session: AsyncSession,
+                    amo_api: AmoCRMWrapper, amo_fields: dict):
+    pipelines = amo_fields.get('pipelines')
+    status_fields = amo_fields.get('statuses')
     max_id = event.callback.user.user_id
     result = await session.execute(select(User).where(User.max_user_id == max_id))
     user = result.scalar_one_or_none()
@@ -62,6 +65,20 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
         context_data = await context.get_data()
         results = context_data.setdefault('results', {})
         results['lesson_id'] = lesson.id
+
+        status_id_in_amo = amo_api.get_lead_by_id(lead_id=user.amo_deal_id).get('status_id')
+        push_to_new_status = await check_push_to_new_status(lesson_key='ready_to_exam',
+                                                            lead_status=status_id_in_amo)
+        if push_to_new_status:
+            try:
+                amo_api.push_lead_to_status(
+                    pipeline_id=pipelines.get("hite_pro_education"),
+                    status_id=status_fields.get("ready_to_exam"),
+                    lead_id=str(user.amo_deal_id),
+                )
+            except Exception as error:
+                logger.error(f'Не получилось перевести сделку в этап "Приступил к экзамену"')
+                logger.exception(error)
 
         await context.set_state(Exam.vebinar)
         if event.message is None:
