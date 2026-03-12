@@ -40,7 +40,7 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
     lesson_deny = await lesson_access(user=user, session=session, lesson_key='lesson_2')
     if not lesson_deny:
         await event.message.edit(
-            text='Доступ закрыт!😢\n\nТребуется успешное прохождение урока №1!', notify=False)
+            text='Доступ закрыт!😢\n\nТребуется успешное прохождение урока №1!', attachments=[])
         builder = await get_main_menu(user=user, session=session)
 
         await event.message.answer(
