@@ -39,9 +39,9 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
 
     lesson_deny = await lesson_access(user=user, session=session, lesson_key='lesson_2')
     if not lesson_deny:
-        await event._ensure_bot().send_callback(
-            callback_id=event.callback.callback_id,
-            notification='Доступ закрыт! Требуется успешное прохождение урока №1!'
+        await event.answer(
+            notification='Доступ закрыт!😢\n\nТребуется успешное прохождение урока №1!',
+            new_text=welcome_message
         )
         return
     else:
