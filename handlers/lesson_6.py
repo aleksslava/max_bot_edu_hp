@@ -188,10 +188,10 @@ async def question_4(event: MessageCallback, context: MemoryContext):
     await context.set_state(Lesson_6.question_4)
 
     kb: InlineKeyboardBuilder = build_question_multiply_keyboard(
-        lesson.get(f'Lesson_{lesson_number}:question_{question_number}'))
+        lesson.get(f'Lesson_{lesson_number}:question_{question_number}'), text_on_button=False)
     await event.message.edit(
         text=get_question_text(questions=lesson, lesson_number=lesson_number, question_number=question_number,
-                               is_radio=False),
+                               is_radio=False, with_answers=True),
         attachments=[kb.as_markup()])
 
 
@@ -213,10 +213,10 @@ async def proceed_question_4(event: MessageCallback, context: MemoryContext):
 
     kb: InlineKeyboardBuilder = build_question_multiply_keyboard(
         lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
-        choose_payload=result_question)
+        choose_payload=result_question, text_on_button=False)
     await event.message.edit(
         text=get_question_text(questions=lesson, lesson_number=lesson_number, question_number=question_number,
-                               is_radio=False),
+                               is_radio=False, with_answers=True),
         attachments=[kb.as_markup()])
 
 
