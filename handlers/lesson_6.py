@@ -313,7 +313,7 @@ async def result(event: MessageCallback, context: MemoryContext, session: AsyncS
             await session.refresh(user)
 
             # Отправляем примечание в сделку с обучением
-            amo_api.add_new_note_to_lead(lead_id=user.amo_deal_id, text=f'Результаты урока №6: {result}')
+            amo_api.add_new_note_to_lead(lead_id=user.amo_deal_id, text=f'Результаты урока №6: {title}')
 
             user_lead_id = user.amo_deal_id
             status_id_in_amo = amo_api.get_lead_by_id(lead_id=user_lead_id).get('status_id')
