@@ -377,6 +377,7 @@ async def result(event: MessageCallback, context: MemoryContext, session: AsyncS
     max_id = event.callback.user.user_id
     result = await context.get_data()
     lesson_id = result.get('lesson_id')
+    logger.info(f'Обработка результатов первого урока - id = {lesson_id}')
     pipelines = amo_fields.get('pipelines')
     status_fields = amo_fields.get('statuses')
     checking_result = proceed_result(questions=lesson, results=result)
