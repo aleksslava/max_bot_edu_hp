@@ -18,10 +18,10 @@ from service.questions_lexicon import welcome_message, exam_lesson, exam_questio
     urls_to_messanger, edu_not_compleat
 from fsm.exam import Exam
 from fsm.main_states import Main_menu
-from service.service import check_push_to_new_status
+from service.service import check_push_to_new_status, lesson_access
 from services.utils import build_question_inline_keyboard, proceed_radio_button, build_question_multiply_keyboard, \
     proceed_multiply_button, get_question_text, proceed_result, main_menu_button, build_exam_keyboard, proceed_exam, \
-    result_exam
+    result_exam, get_main_menu
 from service.questions_lexicon import questions_7 as lesson
 from config.config import BASE_DIR
 
@@ -35,44 +35,58 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
     user = result.scalar_one_or_none()
     if user is None:
         raise ValueError(f'Пользователь не найден при переходе в экзамен, max_id: {max_id}')
-    if user.start_edu is None:
-        user.start_edu = datetime.datetime.utcnow()
-    lesson = LessonResult(
-        user_id=user.id,
-        lesson_key='exam',
-    )
-    session.add(lesson)
-    await session.commit()
-    await session.refresh(lesson)
-    logger.info(f'Запущен экзамен пользователем max_id:{max_id}. ID урока в БД - {lesson.id}')
-    context_data = await context.get_data()
-    results = context_data.setdefault('results', {})
-    results['lesson_id'] = lesson.id
+    lesson_deny = await lesson_access(user=user, session=session, lesson_key='exam')
+    if not lesson_deny:
+        await event.message.edit(
+            text='Доступ закрыт!😢\n\nТребуется успешное прохождение урока №7!', attachments=[])
+        builder = await get_main_menu(user=user, session=session)
 
-    await context.set_state(Exam.vebinar)
-    if event.message is None:
+        await event.message.answer(
+            text=welcome_message,
+            attachments=[
+                builder.as_markup(),
+            ]
+        )
         return
+    else:
+        if user.start_edu is None:
+            user.start_edu = datetime.datetime.utcnow()
+        lesson = LessonResult(
+            user_id=user.id,
+            lesson_key='exam',
+        )
+        session.add(lesson)
+        await session.commit()
+        await session.refresh(lesson)
+        logger.info(f'Запущен экзамен пользователем max_id:{max_id}. ID урока в БД - {lesson.id}')
+        context_data = await context.get_data()
+        results = context_data.setdefault('results', {})
+        results['lesson_id'] = lesson.id
 
-    kb = InlineKeyboardBuilder()
-    kb.add(
-        CallbackButton(
-            text='Вперед',
-            payload='next'),
+        await context.set_state(Exam.vebinar)
+        if event.message is None:
+            return
+
+        kb = InlineKeyboardBuilder()
+        kb.add(
+            CallbackButton(
+                text='Вперед',
+                payload='next'),
+            )
+
+        token = video_tokens.get('hp_exam')
+        attachment = AttachmentUpload(
+            type=UploadType.VIDEO,
+            payload=AttachmentPayload(token=token),
         )
 
-    token = video_tokens.get('hp_exam')
-    attachment = AttachmentUpload(
-        type=UploadType.VIDEO,
-        payload=AttachmentPayload(token=token),
-    )
 
-
-    await event.message.edit(
-        text='Видеозапись экзамена',
-        attachments=[
-            attachment,
-            kb.as_markup()],
-    )
+        await event.message.edit(
+            text='Видеозапись экзамена',
+            attachments=[
+                attachment,
+                kb.as_markup()],
+        )
 
 
 #  Вход в первый вопрос
