@@ -25,6 +25,7 @@ error_handler = Router()
 
 @error_handler.message_created()
 async def message_create_error(event: MessageCreated, context: MemoryContext, session: AsyncSession):
+    await context.clear()
     # Получаем id пользователя в мах
     max_id = event.message.sender.user_id
     logger.info(f'Запущен бот пользователем max_id:{max_id}')
@@ -62,6 +63,7 @@ async def message_create_error(event: MessageCreated, context: MemoryContext, se
 
 @error_handler.message_callback(F.callback.payload != '')
 async def error_handler_callback(event: MessageCallback, context: MemoryContext, session: AsyncSession):
+    await context.clear()
     # Получаем id пользователя в мах
     max_id = event.callback.user.user_id
     logger.info(f'Запущен бот пользователем max_id:{max_id}')

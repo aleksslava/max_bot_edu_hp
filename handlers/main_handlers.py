@@ -23,6 +23,7 @@ main_router = Router()
 
 @main_router.bot_started()
 async def bot_start(event: BotStarted, context: MemoryContext, session: AsyncSession):
+    await context.clear()
     # Получаем id пользователя в мах
     max_id = event.user.user_id
     logger.info(f'Запущен бот пользователем max_id:{max_id}')
@@ -65,6 +66,7 @@ async def bot_start(event: BotStarted, context: MemoryContext, session: AsyncSes
 
 @main_router.message_created(Command('start'))
 async def start(event: MessageCreated, context: MemoryContext, session: AsyncSession):
+    await context.clear()
     # Получаем id пользователя в мах
     max_id = event.message.sender.user_id
     logger.info(f'Запущен бот пользователем max_id:{max_id}')
@@ -105,6 +107,7 @@ async def start(event: MessageCreated, context: MemoryContext, session: AsyncSes
 
 @main_router.message_callback(F.callback.payload == 'main_menu', Main_menu.menu)
 async def main_menu(event: MessageCallback, context: MemoryContext, session: AsyncSession):
+    await context.clear()
     # Получаем id пользователя в мах
     max_id = event.callback.user.user_id
     logger.info(f'Запущен бот пользователем max_id:{max_id}')
