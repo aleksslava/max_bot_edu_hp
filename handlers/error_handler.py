@@ -24,7 +24,7 @@ error_handler = Router()
 
 
 @error_handler.message_created()
-async def error_handler(event: MessageCreated, context: MemoryContext, session: AsyncSession):
+async def message_create_error(event: MessageCreated, context: MemoryContext, session: AsyncSession):
     # Получаем id пользователя в мах
     max_id = event.message.sender.user_id
     logger.info(f'Запущен бот пользователем max_id:{max_id}')
