@@ -113,7 +113,7 @@ def build_exam_keyboard(question_data: dict[str, Any], question_number: str, cho
                     builder.row(
                         CallbackButton(
                             text=f'{row_key}: {row_value}',
-                            payload=None
+                            payload='None'
                         )
                     )
                     builder.row(
@@ -129,7 +129,7 @@ def build_exam_keyboard(question_data: dict[str, Any], question_number: str, cho
                     continue
                 buttons.append(CallbackButton(
                     text=f'{row_key}: {row_value}',
-                    payload=None
+                    payload='None'
                 ))
                 buttons_floor.append(CallbackButton(
                     text='-',
@@ -147,7 +147,7 @@ def build_exam_keyboard(question_data: dict[str, Any], question_number: str, cho
             builder.row(
                 CallbackButton(
                     text=f'{key}: {value}',
-                    payload=None
+                    payload='None'
                 )
             )
             builder.row(
