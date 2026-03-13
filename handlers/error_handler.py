@@ -60,7 +60,7 @@ async def error_handler(event: MessageCreated, context: MemoryContext, session: 
             ]
         )
 
-@error_handler.message_callback()
+@error_handler.message_callback(F.callback.payload != '')
 async def error_handler_callback(event: MessageCallback, context: MemoryContext, session: AsyncSession):
     # Получаем id пользователя в мах
     max_id = event.callback.user.user_id
