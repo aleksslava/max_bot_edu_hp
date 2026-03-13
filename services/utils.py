@@ -347,6 +347,10 @@ async def get_main_menu(user: User, session: AsyncSession) -> InlineKeyboardBuil
         CallbackButton(
             text=lesson_access['exam'],
             payload='exam',
+        ),
+        CallbackButton(
+            text='📖 Статистика обучения',
+            payload='stat',
         )
     )
     builder.adjust(1)

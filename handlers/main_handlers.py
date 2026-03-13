@@ -288,3 +288,72 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
     )
 
 
+@main_router.message_callback(F.callback.payload == 'stat', Main_menu.menu)
+async def stat(event: MessageCallback, context: MemoryContext, session: AsyncSession):
+    max_id = event.callback.user.user_id
+
+
+    result = await session.execute(
+        select(User)
+        .options(selectinload(User.lesson_results))
+        .where(User.max_user_id == max_id)
+    )
+    user = result.scalar_one_or_none()
+
+    lesson_names = {
+        "lesson_1": "Урок №1",
+        "lesson_2": "Урок №2",
+        "lesson_3": "Урок №3",
+        "lesson_4": "Урок №4",
+        "lesson_5": "Урок №5",
+        "lesson_6": "Урок №6",
+        "lesson_7": "Урок №7",
+        "exam": "Экзамен",
+    }
+
+    if user is None:
+        return {"message": "Пользователь не найден."}
+
+    results_by_key: dict[str, list[LessonResult]] = {}
+    for lesson in user.lesson_results or []:
+        results_by_key.setdefault(lesson.lesson_key, []).append(lesson)
+
+    lines: list[str] = []
+    for lesson_key in lesson_names.keys():
+        lesson_title = lesson_names.get(lesson_key, lesson_key)
+        lines.append(f"{lesson_title}:")
+
+        attempts = results_by_key.get(lesson_key, [])
+        attempts_sorted = sorted(attempts, key=lambda l: l.id or 0)
+        total_attempts = len(attempts_sorted)
+        successful_attempts = sum(1 for attempt in attempts_sorted if attempt.compleat)
+
+        completed_attempts = [attempt for attempt in attempts_sorted if attempt.completed_at is not None]
+        if completed_attempts:
+            last_completed_attempt = max(
+                completed_attempts,
+                key=lambda attempt: (attempt.completed_at, attempt.id or 0),
+            )
+            if last_completed_attempt.score is not None:
+                last_result_text = f"{last_completed_attempt.score} баллов."
+            else:
+                last_result_text = "нет данных."
+        else:
+            last_result_text = "нет данных."
+
+        lines.append(f"📖 Всего попыток - {total_attempts}")
+        lines.append(f"✅ Успешных - {successful_attempts}")
+        lines.append(f"⏩ Результат последней попытки - {last_result_text}")
+
+        lines.append("")
+    lines.append("Успешной попыткой считается результат: более 80% правильных ответов.")
+    message = "\n".join(lines).strip()
+    # return {"message": message}
+    builder = InlineKeyboardBuilder()
+    builder.add(CallbackButton(text='Назад', payload='main_menu'))
+    await event.message.edit(
+        text=message,
+        attachments=[
+            builder.as_markup(),
+        ]
+    )
