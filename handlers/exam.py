@@ -15,7 +15,7 @@ from amo_api.amo_api import AmoCRMWrapper
 from db.models import User, HpLessonResult as LessonResult
 
 from service.questions_lexicon import welcome_message, exam_lesson, exam_questions, edu_compleat_text, \
-    urls_to_messanger, edu_not_compleat
+    urls_to_messanger, edu_not_compleat, exam_in_message
 from fsm.exam import Exam
 from fsm.main_states import Main_menu
 from service.service import check_push_to_new_status, lesson_access
@@ -99,7 +99,7 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
 
 
         await event.message.edit(
-            text='Видеозапись экзамена',
+            text=exam_in_message,
             attachments=[
                 attachment,
                 kb.as_markup()],
