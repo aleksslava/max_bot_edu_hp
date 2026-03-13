@@ -353,6 +353,8 @@ async def get_main_menu(user: User, session: AsyncSession) -> InlineKeyboardBuil
             payload='stat',
         )
     )
+    if lesson_access['is_admin']:
+        builder.add(CallbackButton(text='Кабинет администратора', payload='admin_menu'))
     builder.adjust(1)
 
     return builder
