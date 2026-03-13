@@ -1,4 +1,5 @@
-from pprint import pprint
+import asyncio
+import aiohttp
 import logging
 from maxapi import Router, F, Bot
 from maxapi.context import MemoryContext
@@ -22,8 +23,39 @@ logger = logging.getLogger(__name__)
 main_router = Router()
 
 @main_router.bot_started()
-async def bot_start(event: BotStarted, context: MemoryContext, session: AsyncSession):
+async def bot_start(event: BotStarted, context: MemoryContext, session: AsyncSession,
+                    webhook_url: str, utm_token:str):
     await context.clear()
+    webhook_id = event.payload
+    if webhook_id is not None:
+        utm_data = {
+            "utm_source": "",
+            "utm_medium": "",
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_term": "",
+            "yclid": "",
+        }
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{webhook_url}{webhook_id}",
+                    params={"utm_token": utm_token},
+                    timeout=10,
+                ) as response:
+                    response.raise_for_status()
+                    payload = await response.json()
+                    if isinstance(payload, dict):
+                        utm_data.update(payload)
+                        logger.info(f'Получены UTM метки клиента: {utm_data["utm_source"]}; {utm_data["utm_medium"]}\n'
+                                    f'; {utm_data["utm_campaign"]}; {utm_data["utm_content"]}; {utm_data["utm_term"]}\n'
+                                    f'; {utm_data["yclid"]}')
+
+                        context_data = await context.get_data()
+                        context_data['utm_data'] = utm_data
+        except (aiohttp.ClientError, asyncio.TimeoutError, ValueError):
+            pass
+
     # Получаем id пользователя в мах
     max_id = event.user.user_id
     logger.info(f'Запущен бот пользователем max_id:{max_id}')
@@ -151,7 +183,9 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
                     amo_fields: dict):
     pipelines = amo_fields.get('pipelines')
     status_fields = amo_fields.get('statuses')
-    utm_metriks = {}
+    utm_metriks = amo_fields.get('fields_id').get('utm_metriks')
+    context_data = await context.get_data()
+    utm_data = context_data.get('utm_data', {})
     attachments = (event.message.body.attachments if event.message and event.message.body else []) or []
     max_id = event.message.sender.user_id
     phone = None
@@ -160,6 +194,8 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
             phone = extract_phone_from_vcf(att.payload.vcf_info or "")
             logger.info(f'Пользователь max_id: {max_id} поделился номером телефона: {phone}')
             break
+
+
     # Ищем контакт в Амосрм
     contact_data = processing_contact(amo_api=amo_api, contact_phone_number=str(phone))
     if contact_data is not None:
@@ -216,6 +252,12 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
                 first_name = contact_data.get("first_name"),
                 last_name = contact_data.get("last_name"),
                 amo_contact_id = contact_data.get("amo_contact_id"),
+                utm_campaign=utm_data.get("utm_campaign", ''),
+                utm_medium=utm_data.get("utm_medium", ''),
+                utm_content=utm_data.get("utm_content", ''),
+                utm_term=utm_data.get("utm_term", ''),
+                utm_source=utm_data.get("utm_source", ''),
+                yclid=utm_data.get("yclid", ''),
             )
             session.add(user)
             await session.commit()
@@ -254,6 +296,13 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
         logger.info(f'В амо не найден контакт для пользователя max_id: {max_id}, телефон: {phone}')
         user = User(
             max_user_id= max_id,
+            phone_number=phone,
+            utm_campaign=utm_data.get("utm_campaign", ''),
+            utm_medium=utm_data.get("utm_medium", ''),
+            utm_content=utm_data.get("utm_content", ''),
+            utm_term=utm_data.get("utm_term", ''),
+            utm_source=utm_data.get("utm_source", ''),
+            yclid=utm_data.get("yclid", ''),
         )
         session.add(user)
         new_contact_id = amo_api.create_new_contact(first_name='Новый контакт из бота MAX',
