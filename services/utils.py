@@ -85,7 +85,7 @@ def proceed_exam(question_data: dict[str, Any], question_number: str, choose_pay
     if choose_payload is None or  not choose_payload:
         choose_payload = {key: 0 for key in question_data.get(question_number).keys()}
 
-    if now_choose is not None:
+    if now_choose != 'None':
         key, method = now_choose.split('_')
         if method == 'increment':
             choose_payload[key] = int(choose_payload.get(key, 0)) + 1
