@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 error_handler = Router()
 
 
-@error_handler.message_created
+@error_handler.message_created()
 async def error_handler(event: MessageCreated, context: MemoryContext, session: AsyncSession):
     # Получаем id пользователя в мах
     max_id = event.message.sender.user_id
@@ -60,7 +60,7 @@ async def error_handler(event: MessageCreated, context: MemoryContext, session: 
             ]
         )
 
-@error_handler.message_callback
+@error_handler.message_callback()
 async def error_handler_callback(event: MessageCallback, context: MemoryContext, session: AsyncSession):
     # Получаем id пользователя в мах
     max_id = event.callback.user.user_id
