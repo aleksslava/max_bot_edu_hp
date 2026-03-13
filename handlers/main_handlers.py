@@ -266,11 +266,12 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
                                                utm_metriks_fields=utm_metriks,
                                                user=user
                                                )
+        user.amo_deal_id = new_lead_id
+        user.amo_contact_id = new_contact_id
         response = amo_api.push_lead_to_status(pipeline_id=pipelines.get('hite_pro_education'),
                                                status_id=status_fields.get('authorized_in_bot'),
                                                lead_id=str(user.amo_deal_id))
-        user.amo_deal_id = new_lead_id
-        user.amo_contact_id = new_contact_id
+
         logger.info(f'Для пользователя max_id: {max_id}, телефон: {phone} создан новый контакт {new_contact_id} и '
                     f'новая сделка {new_lead_id}')
 
