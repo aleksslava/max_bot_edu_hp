@@ -59,3 +59,40 @@ async def error_handler(event: MessageCreated, context: MemoryContext, session: 
                 builder.as_markup(),
             ]
         )
+
+@error_handler.message_callback
+async def error_handler_callback(event: MessageCallback, context: MemoryContext, session: AsyncSession):
+    # Получаем id пользователя в мах
+    max_id = event.callback.user.user_id
+    logger.info(f'Запущен бот пользователем max_id:{max_id}')
+
+    # Запрос в БД на наличие пользователя
+    result = await session.execute(select(User).where(User.max_user_id == max_id))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        await context.set_state(Main_menu.authorize)
+        logger.info(f'Для пользователя max_id:{max_id} не найдена запись в БД!\n'
+                    f'Отправляю запрос контакта!')
+
+        kb = InlineKeyboardBuilder()
+        kb.add(
+            RequestContactButton(text='Авторизоваться')
+        )
+        await event.message.edit(
+            text='👇Для прохождения обучения, поделитесь номером телефона через кнопку👇',
+            attachments=[
+                kb.as_markup(),
+            ]
+        )
+
+    else:
+        await context.set_state(Main_menu.menu)
+        builder = await get_main_menu(user=user, session=session)
+
+        await event.message.edit(
+            text=welcome_message,
+            attachments=[
+                builder.as_markup(),
+            ]
+        )
