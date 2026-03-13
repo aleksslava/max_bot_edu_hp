@@ -9,6 +9,7 @@ from config.config import load_config, Config
 from config.config import load_config
 from maxapi.enums import parse_mode
 
+from handlers.admin_menu import admin_router
 from handlers.error_handler import error_handler
 from handlers.exam import exam_router
 from handlers.lesson_5 import lesson_5
@@ -52,7 +53,7 @@ amo_api = AmoCRMWrapper(
 
 dp = Dispatcher()
 dp.include_routers(main_router, lesson_1, lesson_2, lesson_3, lesson_4, lesson_5, lesson_6, lesson_7,
-                   exam_router, error_handler)
+                   exam_router,admin_router, error_handler)
 
 
 async def run() -> None:
