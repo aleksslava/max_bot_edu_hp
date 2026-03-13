@@ -127,7 +127,7 @@ async def question_1(event: MessageCallback, context: MemoryContext, image_token
     await event.message.edit()
 
     kb: InlineKeyboardBuilder = build_exam_keyboard(question_data=exam_lesson, question_number='q1')
-    await event.message.edit(text=event.message.body.text, attachments=[video_attachment])
+    await event.message.edit(text=exam_in_message, attachments=[video_attachment])
     await event.message.answer(text=exam_questions.get('1'),
                                attachments=[kb.as_markup(), attachment])
 
