@@ -37,8 +37,8 @@ async def bot_start(event: BotStarted, context: MemoryContext, session: AsyncSes
             "yclid": "",
         }
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
+            async with aiohttp.ClientSession() as client_session:
+                async with client_session.get(
                     f"{webhook_url}{webhook_id}",
                     params={"utm_token": utm_token},
                     timeout=10,
