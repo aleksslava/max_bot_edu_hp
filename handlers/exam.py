@@ -317,18 +317,19 @@ async def exam_result(event: MessageCallback, context: MemoryContext, image_toke
         await session.refresh(lesson_obj)
         await session.refresh(user)
 
+        note_result = result_check.get('title')
         # Отправляем примечание в сделку с обучением
-        amo_api.add_new_note_to_lead(lead_id=user.amo_deal_id, text=f'Результаты урока №1: {exam_results}')
+        amo_api.add_new_note_to_lead(lead_id=user.amo_deal_id, text=f'Результаты экзамена:\n {note_result}')
 
         user_lead_id = user.amo_deal_id
         status_id_in_amo = amo_api.get_lead_by_id(lead_id=user_lead_id).get('status_id')
-        push_to_new_status = await check_push_to_new_status(lesson_key='compleat_lesson_1',
+        push_to_new_status = await check_push_to_new_status(lesson_key='compleat_exam',
                                                             lead_status=status_id_in_amo)
 
         # Перемещаем сделку далее по воронке обучения, если успешно. В сделку записываем примечание с результатами
         if result_check.get('results') and push_to_new_status:
             amo_api.push_lead_to_status(pipeline_id=pipelines.get('hite_pro_education'),
-                                        status_id=status_fields.get('compleat_lesson_1'),
+                                        status_id=status_fields.get('compleat_exam'),
                                         lead_id=str(user.amo_deal_id))
     await event.message.edit(text=result_check.get('title'),
                              attachments=[])
