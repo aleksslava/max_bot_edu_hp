@@ -39,6 +39,13 @@ async def upload_all_videos_and_get_tokens(
             path=str(p),   # <-- важно
         )
 
+    for p in sorted(folder.glob("*.avi")):
+        key = p.stem
+        video_tokens[key] = await upload_video_and_get_token(
+            bot=bot,
+            path=str(p),   # <-- важно
+        )
+
     return video_tokens
 
 

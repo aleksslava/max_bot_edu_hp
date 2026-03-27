@@ -54,6 +54,22 @@ async def ensure_video_tokens_in_env(
 
         video_tokens[stem] = token
 
+    for avi in sorted(folder.glob("*.avi")):
+        stem = avi.stem
+        env_var = _env_var_name_from_stem(stem)
+
+        token = os.getenv(env_var) or env_values.get(env_var)
+
+        if not token:
+            token = await upload_video_and_get_token(bot=bot, path=str(avi))
+            # запишем/обновим ключ в .env
+            set_key(str(env_path), env_var, token)
+
+            # обновим окружение текущего процесса (на всякий случай)
+            os.environ[env_var] = token
+
+        video_tokens[stem] = token
+
     return video_tokens
 
 
