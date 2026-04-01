@@ -303,6 +303,7 @@ def result_exam_for_note(results: dict[str, Any],
                  trouth_results: dict[str, Any]) -> str:
     title = 'Результаты экзамена\n'
 
+
     for question_number in range(1, 5):
         result = results.get(f'exam_{question_number}')
         trough_result = trouth_results.get(f'q{question_number}')
