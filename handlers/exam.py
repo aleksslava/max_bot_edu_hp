@@ -299,9 +299,9 @@ async def exam_result(event: MessageCallback, context: MemoryContext, image_toke
                                trouth_results=exam_lesson
                                )
 
-    # result_for_note = result_exam_for_note(results=exam_results,
-    #                            trouth_results=exam_lesson)
-    logger.info(exam_results)
+    result_for_note = result_exam_for_note(results=exam_results,
+                                            trouth_results=exam_lesson)
+    # logger.info(exam_results)
 
     lesson_obj = None
     user = None
@@ -323,7 +323,7 @@ async def exam_result(event: MessageCallback, context: MemoryContext, image_toke
 
         note_result = result_check.get('title')
         # Отправляем примечание в сделку с обучением
-        amo_api.add_new_note_to_lead(lead_id=user.amo_deal_id, text=f'Результаты экзамена:\n {note_result}')
+        amo_api.add_new_note_to_lead(lead_id=user.amo_deal_id, text=result_for_note)
 
         user_lead_id = user.amo_deal_id
         status_id_in_amo = amo_api.get_lead_by_id(lead_id=user_lead_id).get('status_id')

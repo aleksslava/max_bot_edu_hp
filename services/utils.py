@@ -302,11 +302,13 @@ def result_exam(results: dict[str, Any],
 def result_exam_for_note(results: dict[str, Any],
                  trouth_results: dict[str, Any]) -> str:
     title = 'Результаты экзамена\n'
-
+    if results is None:
+        title += f'Не ответил ни на один вопрос'
+        return title
 
     for question_number in range(1, 5):
-        result = results.get(f'exam_{question_number}')
-        trough_result = trouth_results.get(f'q{question_number}')
+        result = results.get(f'exam_{question_number}', {})
+        trough_result = trouth_results.get(f'q{question_number}', {})
         title += f'\nОтветы на вопрос №{question_number}\n'
         for key in result.keys():
             if result[key] == trough_result[key]:
