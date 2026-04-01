@@ -21,7 +21,7 @@ from fsm.main_states import Main_menu
 from service.service import check_push_to_new_status, lesson_access
 from services.utils import build_question_inline_keyboard, proceed_radio_button, build_question_multiply_keyboard, \
     proceed_multiply_button, get_question_text, proceed_result, main_menu_button, build_exam_keyboard, proceed_exam, \
-    result_exam, get_main_menu
+    result_exam, get_main_menu, result_exam_for_note
 from service.questions_lexicon import questions_7 as lesson
 from config.config import BASE_DIR
 
@@ -299,6 +299,9 @@ async def exam_result(event: MessageCallback, context: MemoryContext, image_toke
                                trouth_results=exam_lesson
                                )
 
+    result_for_note = result_exam_for_note(results=exam_results,
+                               trouth_results=exam_lesson)
+
     lesson_obj = None
     user = None
     if lesson_id is not None:
@@ -319,7 +322,7 @@ async def exam_result(event: MessageCallback, context: MemoryContext, image_toke
 
         note_result = result_check.get('title')
         # Отправляем примечание в сделку с обучением
-        amo_api.add_new_note_to_lead(lead_id=user.amo_deal_id, text=f'Результаты экзамена:\n {note_result}')
+        amo_api.add_new_note_to_lead(lead_id=user.amo_deal_id, text=result_for_note)
 
         user_lead_id = user.amo_deal_id
         status_id_in_amo = amo_api.get_lead_by_id(lead_id=user_lead_id).get('status_id')

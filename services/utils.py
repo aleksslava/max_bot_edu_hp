@@ -299,7 +299,20 @@ def result_exam(results: dict[str, Any],
         'results': all(res),
     }
 
+def result_exam_for_note(results: dict[str, Any],
+                 trouth_results: dict[str, Any]) -> str:
+    title = 'Результаты экзамена\n'
 
+    for question_number in range(1, 5):
+        result = results.get(f'exam_{question_number}')
+        trough_result = trouth_results.get(f'q{question_number}')
+        title += f'\nОтветы на вопрос №{question_number}\n'
+        for key in result.keys():
+            if result[key] == trough_result[key]:
+                title += f'✅ {key} - {result[key]} шт.\n'
+            else:
+                title += f'❌ {key} - {result[key]} шт.\n'
+    return title
 
 def extract_phone_from_vcf(vcf: str) -> str | None:
     m = re.search(r"^TEL(?:;[^:]*)?:(.+)$", vcf, flags=re.MULTILINE | re.IGNORECASE)
