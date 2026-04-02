@@ -9,9 +9,9 @@ from maxapi.types import BotStarted, MessageCreated, CallbackButton, MessageCall
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
 from amo_api.amo_service import processing_contact, processing_lead
-from service.questions_lexicon import welcome_message
+from service.questions_lexicon import welcome_message, manager_text
 from fsm.main_states import Main_menu
-from services.utils import extract_phone_from_vcf, get_main_menu
+from services.utils import extract_phone_from_vcf, get_main_menu, get_manager_url
 from amo_api.amo_api import AmoCRMWrapper
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -21,6 +21,20 @@ from db.models import User, HpLessonResult as LessonResult
 logger = logging.getLogger(__name__)
 
 main_router = Router()
+
+
+
+@main_router.message_callback(F.callback.payload == 'manager')
+async def manager(event: MessageCallback):
+    builder = await get_manager_url()
+
+    await event.message.edit(
+        text=manager_text,
+        attachments=[
+            builder.as_markup(),
+        ]
+    )
+    return builder.as_markup()
 
 @main_router.bot_started()
 async def bot_start(event: BotStarted, context: MemoryContext, session: AsyncSession,

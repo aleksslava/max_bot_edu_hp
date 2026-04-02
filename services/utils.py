@@ -4,11 +4,12 @@ from typing import Any
 import re
 
 from maxapi.enums.intent import Intent
-from maxapi.types import CallbackButton
+from maxapi.types import CallbackButton, LinkButton
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import User
+from service.questions_lexicon import urls_to_messanger
 from service.service import get_lessons_buttons
 
 
@@ -367,6 +368,10 @@ async def get_main_menu(user: User, session: AsyncSession) -> InlineKeyboardBuil
         CallbackButton(
             text='📖 Статистика обучения',
             payload='stat',
+        ),
+        CallbackButton(
+            text='Написать менеджеру',
+            payload='manager',
         )
     )
     if lesson_access['is_admin']:
@@ -374,3 +379,14 @@ async def get_main_menu(user: User, session: AsyncSession) -> InlineKeyboardBuil
     builder.adjust(1)
 
     return builder
+
+async def get_manager_url():
+    kb = InlineKeyboardBuilder()
+    kb.row(LinkButton(url=urls_to_messanger.get('tg'), text='🔵 Сообщить в телеграмм'))
+    kb.row(LinkButton(url=urls_to_messanger.get('whatsapp'), text="🟢 Сообщить в whats'app"))
+    kb.row(LinkButton(url=urls_to_messanger.get('max'), text='🟣 Сообщить в MAX'))
+    kb.row(CallbackButton(text='В главное меню', payload='main_menu'))
+
+    kb.adjust(1)
+
+    return kb
