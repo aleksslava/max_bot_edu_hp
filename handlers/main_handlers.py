@@ -9,7 +9,7 @@ from maxapi.types import BotStarted, MessageCreated, CallbackButton, MessageCall
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
 from amo_api.amo_service import processing_contact, processing_lead
-from service.questions_lexicon import welcome_message, manager_text
+from service.questions_lexicon import welcome_message, manager_text, start_message
 from fsm.main_states import Main_menu
 from services.utils import extract_phone_from_vcf, get_main_menu, get_manager_url
 from amo_api.amo_api import AmoCRMWrapper
@@ -343,7 +343,9 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
 
     await context.set_state(Main_menu.menu)
     builder = await get_main_menu(user=user, session=session)
-
+    await  event.message.answer(
+        text=start_message,
+    )
     await event.message.answer(
         text=welcome_message,
         attachments=[
