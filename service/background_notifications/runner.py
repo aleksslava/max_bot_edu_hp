@@ -89,12 +89,12 @@ async def run_inactivity_notifications_once(bot: Bot) -> dict[str, int]:
                     if user.max_user_id is None:
                         stats["skipped"] += 1
                         continue
-                    if user.max_user_id in [125744927,]:
-                        await bot.send_message(
-                            chat_id=user.max_user_id,
-                            text=message,
-                            attachments=[_build_continue_education_markup()],
-                        )
+
+                    await bot.send_message(
+                        chat_id=user.max_user_id,
+                        text=message,
+                        attachments=[_build_continue_education_markup()],
+                    )
                 except Exception:
                     logger.exception(
                         "Failed to send inactivity message user_id=%s max_user_id=%s stage=%s",
