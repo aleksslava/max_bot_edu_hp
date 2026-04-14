@@ -91,7 +91,7 @@ async def run_inactivity_notifications_once(bot: Bot) -> dict[str, int]:
                         continue
 
                     await bot.send_message(
-                        chat_id=user.max_user_id,
+                        user_id=user.max_user_id,
                         text=message,
                         attachments=[_build_continue_education_markup()],
                     )
