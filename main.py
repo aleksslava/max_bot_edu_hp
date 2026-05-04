@@ -105,7 +105,14 @@ async def run() -> None:
     inactivity_scheduler_task = start_inactivity_scheduler(bot)
 
     try:
-        await dp.start_polling(bot, skip_updates=True)
+
+        webhook_url = 'https://bots-webhook.hite-pro.ru/max/education_bot/'
+        await bot.subscribe_webhook(url=webhook_url)
+        await dp.handle_webhook(
+            bot=bot,
+            host='127.0.0.1',
+            port=8102,
+        )
     finally:
         await stop_inactivity_scheduler(inactivity_scheduler_task)
         inactivity_scheduler_task = None
