@@ -67,6 +67,7 @@ async def bot_start(event: BotStarted, context: MemoryContext, session: AsyncSes
 
                         context_data = await context.get_data()
                         context_data['utm_data'] = utm_data
+                        await context.set_data(context_data)
         except (aiohttp.ClientError, asyncio.TimeoutError, ValueError):
             pass
 

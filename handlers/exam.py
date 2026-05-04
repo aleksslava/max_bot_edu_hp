@@ -65,6 +65,7 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
         context_data = await context.get_data()
         results = context_data.setdefault('results', {})
         results['lesson_id'] = lesson.id
+        await context.set_data(context_data)
 
         status_id_in_amo = amo_api.get_lead_by_id(lead_id=user.amo_deal_id).get('status_id')
         push_to_new_status = await check_push_to_new_status(lesson_key='ready_to_exam',
@@ -151,6 +152,7 @@ async def question_1_proceed(event: MessageCallback, context: MemoryContext, ima
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'exam_{question_number}'] = result_question
+    await context.set_data(context_data)
 
     kb: InlineKeyboardBuilder = build_exam_keyboard(question_data=exam_lesson, question_number='q1', choose_payload=result_question)
 
@@ -194,6 +196,7 @@ async def question_2_proceed(event: MessageCallback, context: MemoryContext, ima
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'exam_{question_number}'] = result_question
+    await context.set_data(context_data)
 
     kb: InlineKeyboardBuilder = build_exam_keyboard(question_data=exam_lesson, question_number='q2', choose_payload=result_question)
 
@@ -236,6 +239,7 @@ async def question_3_proceed(event: MessageCallback, context: MemoryContext, ima
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'exam_{question_number}'] = result_question
+    await context.set_data(context_data)
 
     kb: InlineKeyboardBuilder = build_exam_keyboard(question_data=exam_lesson, question_number='q3', choose_payload=result_question)
 
@@ -278,6 +282,7 @@ async def question_4_proceed(event: MessageCallback, context: MemoryContext, ima
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'exam_{question_number}'] = result_question
+    await context.set_data(context_data)
 
     kb: InlineKeyboardBuilder = build_exam_keyboard(question_data=exam_lesson, question_number='q4',
                                                     choose_payload=result_question)
@@ -290,11 +295,11 @@ async def exam_result(event: MessageCallback, context: MemoryContext, image_toke
                       amo_api: AmoCRMWrapper, amo_fields: dict):
     await context.set_state(Exam.compleate)
     exam_results = await context.get_data()
-    lesson_id = exam_results.get('results').get('lesson_id')
+    lesson_id = (exam_results.get('results') or {}).get('lesson_id')
     logger.info(f'Обработка результатов экзамена - id = {lesson_id}')
     pipelines = amo_fields.get('pipelines')
     status_fields = amo_fields.get('statuses')
-    exam_results = exam_results.get('results', {})
+    exam_results = exam_results.get('results') or {}
     result_check = result_exam(results=exam_results,
                                trouth_results=exam_lesson
                                )

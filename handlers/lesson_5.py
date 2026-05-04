@@ -64,6 +64,7 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
         context_data = await context.get_data()
         results = context_data.setdefault('results', {})
         results['lesson_id'] = lesson.id
+        await context.set_data(context_data)
 
         await context.set_state(Lesson_5.vebinar)
         if event.message is None:
@@ -119,6 +120,7 @@ async def proceed_question_1(event: MessageCallback, context: MemoryContext):
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'question_{question_number}'] = result_question
+    await context.set_data(context_data)
 
     kb: InlineKeyboardBuilder = build_question_inline_keyboard(lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
                                                                text_on_button=False, choose_payload=choose)
@@ -149,6 +151,7 @@ async def proceed_question_2(event: MessageCallback, context: MemoryContext):
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'question_{question_number}'] = result_question
+    await context.set_data(context_data)
 
     kb: InlineKeyboardBuilder = build_question_inline_keyboard(lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
                                                                choose_payload=choose)
@@ -180,6 +183,7 @@ async def proceed_question_3(event: MessageCallback, context: MemoryContext):
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'question_{question_number}'] = result_question
+    await context.set_data(context_data)
 
     kb: InlineKeyboardBuilder = build_question_inline_keyboard(lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
                                                                choose_payload=choose, text_on_button=False)
@@ -212,6 +216,7 @@ async def proceed_question_4(event: MessageCallback, context: MemoryContext):
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'question_{question_number}'] = result_question
+    await context.set_data(context_data)
 
     kb: InlineKeyboardBuilder = build_question_inline_keyboard(lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
                                                                choose_payload=choose, text_on_button=False)
@@ -247,6 +252,7 @@ async def proceed_question_5(event: MessageCallback, context: MemoryContext):
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'question_{question_number}'] = result_question
+    await context.set_data(context_data)
 
     kb: InlineKeyboardBuilder = build_question_inline_keyboard(
         lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
@@ -278,6 +284,7 @@ async def proceed_question_6(event: MessageCallback, context: MemoryContext):
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'question_{question_number}'] = result_question
+    await context.set_data(context_data)
 
     kb: InlineKeyboardBuilder = build_question_inline_keyboard(lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
                                                                choose_payload=choose,
@@ -308,6 +315,7 @@ async def proceed_question_7(event: MessageCallback, context: MemoryContext):
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'question_{question_number}'] = result_question
+    await context.set_data(context_data)
 
     kb: InlineKeyboardBuilder = build_question_inline_keyboard(lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),text_on_button=False,
                                                                choose_payload=choose)
@@ -337,6 +345,7 @@ async def proceed_question_8(event: MessageCallback, context: MemoryContext):
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'question_{question_number}'] = result_question
+    await context.set_data(context_data)
 
 
     kb: InlineKeyboardBuilder = build_question_inline_keyboard(lesson.get(f'Lesson_{lesson_number}:question_{question_number}'), text_on_button=False,
@@ -368,6 +377,7 @@ async def proceed_question_9(event: MessageCallback, context: MemoryContext):
     context_data = await context.get_data()
     results = context_data.setdefault('results', {})
     results[f'question_{question_number}'] = result_question
+    await context.set_data(context_data)
 
     kb: InlineKeyboardBuilder = build_question_inline_keyboard(lesson.get(f'Lesson_{lesson_number}:question_{question_number}'),
                                                                choose_payload=choose, text_on_button=False)
@@ -381,7 +391,7 @@ async def result(event: MessageCallback, context: MemoryContext, session: AsyncS
                  amo_api: AmoCRMWrapper, amo_fields: dict):
     result = await context.get_data()
 
-    lesson_id = result.get('results').get('lesson_id')
+    lesson_id = (result.get('results') or {}).get('lesson_id')
     logger.info(f'Обработка результатов пятого урока - id = {lesson_id}')
     pipelines = amo_fields.get('pipelines')
     status_fields = amo_fields.get('statuses')
