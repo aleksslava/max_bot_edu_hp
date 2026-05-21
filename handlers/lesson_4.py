@@ -85,7 +85,8 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
 
 
         await event.message.edit(
-            text='Видеозапись урока 4',
+            text="<b>Запись четвертого урока HiTE PRO!</b>\n"
+                 "Не грузится видео? Посмотри по ссылке: <a href='https://peertube.hite-pro.ru/w/gAFxQmjGrVmEnTmuaJWgwy'>Урок 4</a>",
             attachments=[
                 attachment,
                 kb.as_markup()],
