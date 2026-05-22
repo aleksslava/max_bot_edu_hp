@@ -180,6 +180,13 @@ def main_menu_button() -> InlineKeyboardBuilder:
     )
     return builder
 
+def start_button() -> InlineKeyboardBuilder:
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        CallbackButton(text="Готов двигаться дальше", payload="start"),
+    )
+    return builder
+
 def proceed_radio_button(question_data: dict[str, Any], choose_payload: str = '') -> dict[str, Any]:
     answers = question_data.get("answers", [])
     question_result = {}
@@ -390,3 +397,5 @@ async def get_manager_url():
     kb.adjust(1)
 
     return kb
+
+
