@@ -352,13 +352,22 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
         payload=AttachmentPayload(token=token),
     )
 
-    await event.message.answer(
-        text=start_message,
-        attachments=[
-            attachment,
-            builder.as_markup(),
-        ]
-    )
+
+    try:
+        await event.message.answer(
+            text=start_message,
+            attachments=[
+                attachment,
+                builder.as_markup(),
+            ]
+        )
+    except Exception:
+        await event.message.answer(
+            text=start_message,
+            attachments=[
+                builder.as_markup(),
+            ]
+        )
 
 
 
