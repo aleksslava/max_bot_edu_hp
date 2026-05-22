@@ -346,16 +346,16 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
 
     await context.set_state(Main_menu.welcome)
     builder = start_button()
-    # token = video_tokens.get('present')
-    # attachment = AttachmentUpload(
-    #     type=UploadType.VIDEO,
-    #     payload=AttachmentPayload(token=token),
-    # )
+    token = video_tokens.get('present')
+    attachment = AttachmentUpload(
+        type=UploadType.VIDEO,
+        payload=AttachmentPayload(token=token),
+    )
 
     await event.message.answer(
         text=start_message,
         attachments=[
-            # attachment,
+            attachment,
             builder.as_markup(),
         ]
     )
