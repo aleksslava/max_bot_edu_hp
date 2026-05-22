@@ -18,7 +18,12 @@ async def upload_video_and_get_token(bot: Bot, path: str) -> str:
         logger.info(f'Получен токен для видео: {path.split("/")[-1]}')
 
     # 2) залить файл на upload.url (multipart/form-data, поле 'data')
-    await bot.upload_file(url=upload.url, path=path, type=UploadType.VIDEO)
+    upload_response = await bot.upload_file(url=upload.url, path=path, type=UploadType.VIDEO)
+    logger.info(
+        "MAX upload_file response for video %s: %s",
+        path.split("/")[-1],
+        upload_response,
+    )
 
     return upload.token
 
