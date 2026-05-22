@@ -82,14 +82,21 @@ async def vebinar_1(event: MessageCallback, context: MemoryContext, video_tokens
             payload=AttachmentPayload(token=token),
         )
 
-
-        await event.message.edit(
-            text="<b>Запись седьмого урока HiTE PRO!</b>\n"
-                 "Не грузится видео? Посмотри по ссылке: <a href='https://peertube.hite-pro.ru/w/bf9K9oNbJo43AoLsqUzjkZ'>Урок 7</a>",
-            attachments=[
-                attachment,
-                kb.as_markup()],
-        )
+        try:
+            await event.message.edit(
+                text="<b>Запись седьмого урока HiTE PRO!</b>\n"
+                     "Не грузится видео? Посмотри по ссылке: <a href='https://peertube.hite-pro.ru/w/bf9K9oNbJo43AoLsqUzjkZ'>Урок 7</a>",
+                attachments=[
+                    attachment,
+                    kb.as_markup()],
+            )
+        except Exception as e:
+            await event.message.edit(
+                text="<b>Запись седьмого урока HiTE PRO!</b>\n"
+                     "Не грузится видео? Посмотри по ссылке: <a href='https://peertube.hite-pro.ru/w/bf9K9oNbJo43AoLsqUzjkZ'>Урок 7</a>",
+                attachments=[
+                    kb.as_markup()],
+            )
 #  Вход в первый вопрос
 @lesson_7.message_callback(F.callback.payload == 'next', Lesson_7.vebinar)
 async def question_1(event: MessageCallback, context: MemoryContext, video_tokens: dict[str, str]):
