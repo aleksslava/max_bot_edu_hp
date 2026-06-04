@@ -214,6 +214,27 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
 
 
     # Ищем контакт в Амосрм
+    if phone is None:
+        attachments_summary = []
+        for index, att in enumerate(attachments):
+            payload = getattr(att, "payload", None)
+            vcf_info = getattr(payload, "vcf_info", None) if payload else None
+            attachments_summary.append(
+                {
+                    "index": index,
+                    "type": str(getattr(att, "type", None)),
+                    "has_payload": payload is not None,
+                    "has_vcf_info": bool(vcf_info),
+                    "vcf_info_len": len(vcf_info) if vcf_info else 0,
+                }
+            )
+        logger.warning(
+            "Phone is None during authorize: max_id=%s, attachments_count=%s, attachments=%s",
+            max_id,
+            len(attachments),
+            attachments_summary,
+        )
+
     contact_data = processing_contact(amo_api=amo_api, contact_phone_number=str(phone))
     if contact_data is not None:
         """Если контакт в АМО найден, то ищем в БД запись USER по полю amo_deal_id"""
