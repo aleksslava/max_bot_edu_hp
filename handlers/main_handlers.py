@@ -11,7 +11,7 @@ from maxapi.types.attachments.upload import AttachmentUpload, AttachmentPayload
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
 from amo_api.amo_service import processing_contact, processing_lead
-from service.questions_lexicon import welcome_message, manager_text, start_message
+from service.questions_lexicon import welcome_message, manager_text, start_message, who_are_you
 from fsm.main_states import Main_menu
 from services.utils import extract_phone_from_vcf, get_main_menu, get_manager_url, start_button
 from amo_api.amo_api import AmoCRMWrapper
@@ -23,6 +23,52 @@ from db.models import User, HpLessonResult as LessonResult
 logger = logging.getLogger(__name__)
 
 main_router = Router()
+
+
+def who_are_you_keyboard() -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    for payload, text in who_are_you.get("buttons", {}).items():
+        kb.add(CallbackButton(text=text, payload=payload))
+    kb.adjust(1)
+    return kb
+
+
+def authorize_keyboard() -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    kb.add(RequestContactButton(text='Авторизоваться'))
+    return kb
+
+
+async def send_who_are_you_message(event: BotStarted | MessageCreated, context: MemoryContext) -> None:
+    await context.set_state(Main_menu.client_type)
+    kb = who_are_you_keyboard()
+    if isinstance(event, BotStarted):
+        await event.bot.send_message(
+            chat_id=event.chat_id,
+            text=who_are_you.get("message", ""),
+            attachments=[
+                kb.as_markup(),
+            ]
+        )
+        return
+
+    await event.message.answer(
+        text=who_are_you.get("message", ""),
+        attachments=[
+            kb.as_markup(),
+        ]
+    )
+
+
+async def edit_to_authorize_request(event: MessageCallback, context: MemoryContext) -> None:
+    await context.set_state(Main_menu.authorize)
+    kb = authorize_keyboard()
+    await event.message.edit(
+        text='👇Для прохождения обучения, поделитесь номером телефона через кнопку👇',
+        attachments=[
+            kb.as_markup(),
+        ]
+    )
 
 
 
@@ -82,22 +128,11 @@ async def bot_start(event: BotStarted, context: MemoryContext, session: AsyncSes
     user = result.scalar_one_or_none()
 
     if user is None:
-        await context.set_state(Main_menu.authorize)
         logger.info(f'Для пользователя max_id:{max_id} не найдена запись в БД!\n'
-                    f'Отправляю запрос контакта!')
-
-
-        kb = InlineKeyboardBuilder()
-        kb.add(
-            RequestContactButton(text='Авторизоваться')
-        )
-        await event.bot.send_message(
-            chat_id=event.chat_id,
-            text='👇Для прохождения обучения, поделитесь номером телефона через кнопку👇',
-            attachments=[
-                kb.as_markup(),
-            ]
-        )
+                    f'Отправляю запрос типа клиента!')
+        await send_who_are_you_message(event, context)
+    elif not user.client_type:
+        await send_who_are_you_message(event, context)
     else:
         await context.set_state(Main_menu.menu)
         builder = await get_main_menu(user=user, session=session)
@@ -125,22 +160,11 @@ async def start(event: MessageCreated, context: MemoryContext, session: AsyncSes
     user = result.scalar_one_or_none()
 
     if user is None:
-        await context.set_state(Main_menu.authorize)
         logger.info(f'Для пользователя max_id:{max_id} не найдена запись в БД!\n'
-                    f'Отправляю запрос контакта!')
-
-
-        kb = InlineKeyboardBuilder()
-        kb.add(
-            RequestContactButton(text='Авторизоваться')
-        )
-        await event.message.answer(
-            text='👇Для прохождения обучения, поделитесь номером телефона через кнопку👇',
-            attachments=[
-                kb.as_markup(),
-            ]
-        )
-
+                    f'Отправляю запрос типа клиента!')
+        await send_who_are_you_message(event, context)
+    elif not user.client_type:
+        await send_who_are_you_message(event, context)
     else:
         await context.set_state(Main_menu.menu)
         builder = await get_main_menu(user=user, session=session)
@@ -152,6 +176,46 @@ async def start(event: MessageCreated, context: MemoryContext, session: AsyncSes
                 builder.as_markup(),
             ]
         )
+
+
+@main_router.message_callback(F.callback.payload != '', Main_menu.client_type)
+async def save_client_type(event: MessageCallback, context: MemoryContext, session: AsyncSession):
+    client_type = who_are_you.get("buttons", {}).get(event.callback.payload)
+    if client_type is None:
+        kb = who_are_you_keyboard()
+        await event.message.edit(
+            text=who_are_you.get("message", ""),
+            attachments=[
+                kb.as_markup(),
+            ]
+        )
+        return
+
+    max_id = event.callback.user.user_id
+    result = await session.execute(select(User).where(User.max_user_id == max_id))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        context_data = await context.get_data()
+        context_data['client_type'] = client_type
+        await context.set_data(context_data)
+        await edit_to_authorize_request(event, context)
+        return
+
+    if not user.client_type:
+        user.client_type = client_type
+        await session.commit()
+        await session.refresh(user)
+
+    await context.set_state(Main_menu.menu)
+    builder = await get_main_menu(user=user, session=session)
+    await event.message.edit(
+        text=welcome_message,
+        attachments=[
+            builder.as_markup(),
+        ]
+    )
+
 
 @main_router.message_callback(F.callback.payload == 'start', Main_menu.welcome)
 @main_router.message_callback(F.callback.payload == 'main_menu', Main_menu.menu)
@@ -166,20 +230,9 @@ async def main_menu(event: MessageCallback, context: MemoryContext, session: Asy
     user = result.scalar_one_or_none()
 
     if user is None:
-        await context.set_state(Main_menu.authorize)
         logger.info(f'Для пользователя max_id:{max_id} не найдена запись в БД!\n'
                     f'Отправляю запрос контакта!')
-
-        kb = InlineKeyboardBuilder()
-        kb.add(
-            RequestContactButton(text='Авторизоваться')
-        )
-        await event.message.edit(
-            text='👇Для прохождения обучения, поделитесь номером телефона через кнопку👇',
-            attachments=[
-                kb.as_markup(),
-            ]
-        )
+        await edit_to_authorize_request(event, context)
 
     else:
         await context.set_state(Main_menu.menu)
@@ -203,6 +256,7 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
     utm_metriks = amo_fields.get('fields_id').get('utm_metriks')
     context_data = await context.get_data()
     utm_data = context_data.get('utm_data', {})
+    client_type = context_data.get('client_type')
     attachments = (event.message.body.attachments if event.message and event.message.body else []) or []
     max_id = event.message.sender.user_id
     phone = None
@@ -361,6 +415,9 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
 
         logger.info(f'Для пользователя max_id: {max_id}, телефон: {phone} создан новый контакт {new_contact_id} и '
                     f'новая сделка {new_lead_id}')
+
+    if client_type and not user.client_type:
+        user.client_type = client_type
 
     await session.commit()
     await session.refresh(user)
