@@ -314,6 +314,7 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
                 else:  # Сделка не найдена, создаём новую
                     logger.info(
                         f'Для пользователя телефон: {phone}, max_id: {max_id} не найдена сделка в амосрм')
+                    user.client_type = client_type
                     new_lead_id = amo_api.send_lead_to_amo(pipeline_id=pipelines.get('hite_pro_education'),
                                                            status_id=status_fields.get('admitted_to_training'),
                                                            contact_id=contact_data.get("amo_contact_id"),
@@ -368,6 +369,7 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
             else:  # Сделка не найдена, создаём новую
                 logger.info(
                     f'Для пользователя телефон: {phone}, max_id: {max_id} не найдена сделка в амосрм')
+                user.client_type = client_type
                 new_lead_id = amo_api.send_lead_to_amo(pipeline_id=pipelines.get('hite_pro_education'),
                                                        status_id=status_fields.get('admitted_to_training'),
                                                        contact_id=contact_data.get("amo_contact_id"),
@@ -401,6 +403,7 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
                                                     last_name=str(phone),
                                                     phone=phone,
                                                     )
+        user.client_type = client_type
         new_lead_id = amo_api.send_lead_to_amo(pipeline_id=pipelines.get('hite_pro_education'),
                                                status_id=status_fields.get('admitted_to_training'),
                                                contact_id=new_contact_id,
