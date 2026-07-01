@@ -35,7 +35,7 @@ amo_fields = {
             'utm_medium': 930630,
             'utm_term': 935823,
             'yclid': 944408,
-            'client_type': 1102030,
+            'client_type': 1106748,
         }
     }
 }
