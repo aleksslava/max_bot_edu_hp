@@ -180,7 +180,7 @@ async def start(event: MessageCreated, context: MemoryContext, session: AsyncSes
 
 @main_router.message_callback(F.callback.payload != '', Main_menu.client_type)
 async def save_client_type(event: MessageCallback, context: MemoryContext, session: AsyncSession):
-    client_type = who_are_you.get("buttons", {}).get(event.callback.payload)[2:]
+    client_type = who_are_you.get("buttons", {}).get(event.callback.payload)
     if client_type is None:
         kb = who_are_you_keyboard()
         await event.message.edit(
@@ -256,7 +256,7 @@ async def authorize(event: MessageCreated, context: MemoryContext, session: Asyn
     utm_metriks = amo_fields.get('fields_id').get('utm_metriks')
     context_data = await context.get_data()
     utm_data = context_data.get('utm_data', {})
-    client_type = context_data.get('client_type')
+    client_type = context_data.get('client_type')[2:]
     attachments = (event.message.body.attachments if event.message and event.message.body else []) or []
     max_id = event.message.sender.user_id
     phone = None
