@@ -180,7 +180,7 @@ async def start(event: MessageCreated, context: MemoryContext, session: AsyncSes
 
 @main_router.message_callback(F.callback.payload != '', Main_menu.client_type)
 async def save_client_type(event: MessageCallback, context: MemoryContext, session: AsyncSession):
-    client_type = who_are_you.get("buttons", {}).get(event.callback.payload)
+    client_type = who_are_you.get("buttons", {}).get(event.callback.payload)[2:]
     if client_type is None:
         kb = who_are_you_keyboard()
         await event.message.edit(
